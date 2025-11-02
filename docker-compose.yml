@@ -1,0 +1,63 @@
+version: "3.9"
+
+
+networks:
+  labnet:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-cs60   
+    ipam:
+      config:
+        - subnet: 192.168.60.0/24               
+          gateway: 192.168.60.1                 
+    attachable: true
+
+services:
+  #Host A (for scanning)
+  host-a:
+    build: ./scanner
+    container_name: host-a
+    hostname: host-a
+    networks:
+      labnet:
+        aliases: [scanner, hosta]
+    environment:
+      - FRIENDLY_NAME=Host A
+    extra_hosts:
+      - "hostvm:192.168.60.1"                   
+      - "host.docker.internal:host-gateway"     
+    working_dir: /root                 
+    volumes:
+      - ./volumes:/root/volumes
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+  #Host B 
+  host-b:
+    build: ./server-b
+    container_name: host-b
+    hostname: host-b
+    networks:
+      labnet:
+        aliases: [hostb]
+    cap_add:
+      - NET_BIND_SERVICE                        
+    extra_hosts:
+      - "hostvm:192.168.60.1"
+      - "host.docker.internal:host-gateway"
+
+  #Host C 
+  host-c:
+    build: ./server-c
+    container_name: host-c
+    hostname: host-c
+    networks:
+      labnet:
+        aliases: [hostc]
+    cap_add:
+      - NET_BIND_SERVICE                        
+    extra_hosts:
+      - "hostvm:192.168.60.1"
+      - "host.docker.internal:host-gateway"
+
